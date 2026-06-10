@@ -55,3 +55,11 @@ Lancement réussi interface docker desktop
 
 Lancement réussi , aperçu de ma structure et du dossier app/
 ![structure](/jour1/job-01-symfony/screenshot/reussi.png)
+
+### Étape 5 page 7 : Configurer la base de données sur le projet
+
+Configuration des mes variables d'environnements dans le .env et création d'une clé secrète sécurisé
+
+![configuration .env et sécurité](/jour1/job-01-symfony/screenshot/configuration-.env-cle-secrete-.png)
+
+##
