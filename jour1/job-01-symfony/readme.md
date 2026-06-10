@@ -62,4 +62,42 @@ Configuration des mes variables d'environnements dans le .env et création d'une
 
 ![configuration .env et sécurité](/jour1/job-01-symfony/screenshot/configuration-.env-cle-secrete-.png)
 
-##
+#### 1. Génération de la clé secrète de l'application
+
+Pour répondre aux exigences de sécurité en production, nous évitons les clés génériques. Nous générons une clé cryptographique forte de 256 bits via l'utilitaire OpenSSL :
+
+```bash
+openssl rand -hex 32
+
+Cette méthode professionnelle garantit l'entropie nécessaire à la sécurisation des jetons CSRF, des sessions utilisateur et des signatures de cookies de Symfony.
+2. Connexion à l'infrastructure MySQL
+
+Nous modifions le fichier app/.env pour lier le framework à notre conteneur de base de données. La configuration de la variable DATABASE_URL se décompose ainsi :
+
+    Moteur de stockage : mysql://
+
+    Authentification : symfony:symfony (utilisateur:mot de passe configurés dans le docker-compose)
+
+    Hôte réseau : @symfony_db (nom de service résolu en interne par le bridge réseau de Docker)
+
+    Port standard : :3306
+
+    Nom de la base : /symfony
+
+3. Gestion de l'environnement conteneurisé
+
+Pour interagir directement avec l'environnement d'exécution PHP, nous ouvrons un terminal interactif TTY dans le conteneur applicatif :
+Bash
+
+docker exec -it symfony_app bash
+
+Note : Cette commande nécessite que l'infrastructure globale ait été préalablement instanciée via docker compose up -d.
+
+Afin d'éviter tout conflit d'accès aux fichiers (Error 500 liée aux droits d'écriture), nous réalignons les permissions de l'espace de travail sur l'utilisateur système du serveur web (www-data) :
+Bash
+
+chown -R www-data:www-data /var/www/html
+chmod -R 775 /var/www/html/var
+
+Pour quitter cet environnement isolé et revenir sur la machine hôte, nous utilisons la commande exit.
+```
