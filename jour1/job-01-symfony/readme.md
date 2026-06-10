@@ -19,3 +19,14 @@ Notre environnement de développement repose sur une architecture multi-conteneu
 Configuration Nginx (default.conf) : Ce fichier définit comment le serveur web traite les requêtes HTTP entrantes sur le port 80. Il indique que le point d'entrée public de l'application est le dossier /var/www/html/public (standard Symfony). Toutes les requêtes vers des fichiers qui n'existent pas physiquement sont redirigées vers le fichier index.php (le Front Controller de Symfony) via le bloc location /. Le bloc location ~ \.php$ transmet ensuite l'exécution de ces scripts PHP au conteneur app (PHP-FPM) sur le port 9000. Enfin, l'accès aux fichiers cachés comme .htaccess est bloqué par mesure de sécurité.
 
 ### Étape 5 : Préparer le fichier Dockerfile
+
+Personnalisation de l'image PHP (Dockerfile) : Ce fichier permet de construire une image Docker sur-mesure basée sur php:8.3-fpm.
+Il met à jour le gestionnaire de paquets (apt-get) pour installer des utilitaires essentiels au développement (curl, unzip, git).
+Ensuite, il télécharge et installe globalement Composer (le gestionnaire de dépendances de PHP), qui est strictement requis pour créer et gérer un projet Symfony.
+
+### Lancement des conteneurs
+
+J'ai rencontré une erreur lors du lancement, cmme Laragon était resté ouvert en fond , le port mysql était déja utilisé ce qui me crée une erreur lors du lancement.
+
+![erreur-lancement](jour1/job-01-symfony/screenshot/erreur-port.png)
+![lancement après correction , arrêt de laragon](jour1/job-01-symfony/screenshot/correction-bug-laragon-ouvert-mysql-port-bloque.png)
