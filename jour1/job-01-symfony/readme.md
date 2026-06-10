@@ -1,7 +1,7 @@
 ### Initialisation du projet
 
 Vérification des versions de docker, symfony, composer
-![screenshot-vérification-des-versions](jour1/job-01-symfony/screenshot/verification-des-versions-composer-docker-symfony.png)
+![screenshot-vérification-des-versions](/jour1/job-01-symfony/screenshot/verification-des-versions-composer-docker-symfony.png)
 
 ### Architecture Docker (docker-compose.yml)
 
@@ -28,5 +28,30 @@ Ensuite, il télécharge et installe globalement Composer (le gestionnaire de d�
 
 J'ai rencontré une erreur lors du lancement, cmme Laragon était resté ouvert en fond , le port mysql était déja utilisé ce qui me crée une erreur lors du lancement.
 
-![erreur-lancement](jour1/job-01-symfony/screenshot/erreur-port.png)
-![lancement après correction , arrêt de laragon](jour1/job-01-symfony/screenshot/correction-bug-laragon-ouvert-mysql-port-bloque.png)
+![erreur-lancement](/jour1/job-01-symfony/screenshot/erreur-port.png)
+![lancement après correction , arrêt de laragon](/jour1/job-01-symfony/screenshot/correction-bug-laragon-ouvert-mysql-port-bloque.png)
+
+### Étape 6 : Installer Symfony
+
+- symfony new app : Initialise un nouveau projet en téléchargeant l'architecture native du framework directement dans le répertoire app. Ce dossier est automatiquement synchronisé avec le conteneur Docker grâce au volume configuré dans notre docker-compose.yml.
+
+- --version="7.2.x" : Verrouille l'installation sur la version mineure stable de Symfony 7. Cela assure une parfaite compatibilité avec PHP 8.2+, l'exploitation des fonctionnalités modernes (comme les attributs PHP natifs) et la pérennité du code face aux futures mises à jour.
+
+- --webapp : Ce flag télécharge la configuration complète pour une application web traditionnelle (Full-Stack). Plutôt que de partir d'un squelette vide (microframework), cette option installe immédiatement les composants indispensables en production : l'ORM (Doctrine), le moteur de rendu (Twig), le gestionnaire de formulaires, le validateur de données, et le framework de sécurité.
+
+Aperçu de l'architecture professionnelle générée :L'exécution de cette commande génère une arborescence standardisée, facilitant le travail collaboratif et la maintenance :
+
+- config/ : Centralise la configuration des routes, des services injectés et des bundles tiers.
+- public/ : L'unique point d'entrée exposé sur le web (lié à notre fichier default.conf de Nginx). Il contient le fichier index.php (Front Controller) qui intercepte toutes les requêtes HTTP.
+- src/ : Le cœur architectural où sera écrit l'ensemble du code métier (Contrôleurs, Entités Doctrine, Services, Repositories).
+- templates/ : Regroupe l'ensemble des fichiers de l'interface utilisateur gérés par le moteur de template Twig.
+- .env : Fichier clé stockant les variables d'environnement spécifiques à l'infrastructure locale (identifiants de base de données, clés secrètes).
+
+commande: symfony new app --version="7.2.x" --webapp
+![lancement de l'installation de symfony](/jour1/job-01-symfony/screenshot/etape-6-installer-symfony.png)
+
+Lancement réussi interface docker desktop
+![Lancement réussi interface docker desktop](/jour1/job-01-symfony/screenshot/lancement-reussi.png)
+
+Lancement réussi , aperçu de ma structure et du dossier app/
+![structure](/jour1/job-01-symfony/screenshot/reussi.png)
