@@ -1,103 +1,122 @@
-### Initialisation du projet
+# La Plateforme - Job 01 : Architecture & Base Symfony 7
 
-Vérification des versions de docker, symfony, composer
-![screenshot-vérification-des-versions](/jour1/job-01-symfony/screenshot/verification-des-versions-composer-docker-symfony.png)
+![Symfony](https://img.shields.io/badge/Symfony-7.2-black?style=flat-square&logo=symfony)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)
+![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?style=flat-square&logo=php)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql)
 
-### Architecture Docker (docker-compose.yml)
+## 🛠️ Initialisation du projet
+
+Vérification des versions de Docker, Symfony et Composer avant le lancement :
+![screenshot-vérification-des-versions](screenshot/verification-des-versions-composer-docker-symfony.png)
+
+### Architecture Docker (`docker-compose.yml`)
 
 Notre environnement de développement repose sur une architecture multi-conteneurs moderne, permettant de séparer les responsabilités :
 
-- **`app` (php:8.3-fpm)** : C'est le cœur de l'application. Ce conteneur exécute le code PHP de Symfony. Le code source est monté via un volume persistant, ce qui permet de voir les modifications en temps réel sans redémarrer le conteneur.
-- **`webserver` (nginx:stable)** : Le serveur web frontal. Il écoute sur le port 8080, distribue les fichiers statiques (assets) et transfère les requêtes dynamiques au conteneur `app` via le port 9000.
-- **`database` (mysql:8.0)** : Le système de gestion de base de données. Les données sont sauvegardées de manière permanente sur la machine hôte grâce au volume `db_data`.
-- **`adminer` & `phpmyadmin`** : Deux interfaces graphiques de gestion de base de données, liées directement au conteneur `database` et accessibles respectivement sur les ports 8081 et 8082.
-- **`networks` (`symfony_network`)** : Un réseau privé virtuel isolant nos conteneurs du reste du système, tout en leur permettant de communiquer entre eux via leurs noms (résolution DNS interne).
-- **`volumes`** : Les points de montage qui garantissent la sauvegarde de nos données (bases de données, cache Symfony, et logs PHP/Nginx) même lorsque les conteneurs sont détruits.
+- **`app` (php:8.3-fpm)** : C'est le cœur de l'application. Ce conteneur exécute le code PHP de Symfony. Le code source est monté via un volume persistant, permettant de voir les modifications en temps réel.
+- **`webserver` (nginx:stable)** : Le serveur web frontal. Il écoute sur le port 8080, distribue les fichiers statiques et transfère les requêtes dynamiques au conteneur `app` via le port 9000.
+- **`database` (mysql:8.0)** : Le SGBD. Les données sont sauvegardées de manière permanente sur la machine hôte grâce au volume `db_data`.
+- **`adminer` & `phpmyadmin`** : Interfaces graphiques de gestion de base de données, accessibles sur les ports 8081 et 8082.
+- **`networks` (`symfony_network`)** : Un réseau privé virtuel isolant nos conteneurs et leur permettant de communiquer via résolution DNS interne.
+- **`volumes`** : Points de montage garantissant la sauvegarde de nos données même lorsque les conteneurs sont détruits.
 
-### Étape 4 : Préparer le fichier default.conf
+### Configuration du Serveur et de l'Image
 
-Configuration Nginx (default.conf) : Ce fichier définit comment le serveur web traite les requêtes HTTP entrantes sur le port 80. Il indique que le point d'entrée public de l'application est le dossier /var/www/html/public (standard Symfony). Toutes les requêtes vers des fichiers qui n'existent pas physiquement sont redirigées vers le fichier index.php (le Front Controller de Symfony) via le bloc location /. Le bloc location ~ \.php$ transmet ensuite l'exécution de ces scripts PHP au conteneur app (PHP-FPM) sur le port 9000. Enfin, l'accès aux fichiers cachés comme .htaccess est bloqué par mesure de sécurité.
+**Configuration Nginx (`default.conf`)**
+Ce fichier indique que le point d'entrée public est `/var/www/html/public`. Toutes les requêtes vers des fichiers inexistants sont redirigées vers `index.php` (Front Controller). Le bloc `location ~ \.php$` transmet l'exécution à PHP-FPM (port 9000). Les fichiers cachés sont bloqués par sécurité.
 
-### Étape 5 : Préparer le fichier Dockerfile
+**Personnalisation de l'image PHP (`Dockerfile`)**
+Construction d'une image sur-mesure basée sur `php:8.3-fpm`. Elle installe les utilitaires essentiels (`curl`, `unzip`, `git`), l'extension `pdo_mysql` pour la base de données, et télécharge globalement `Composer`.
 
-Personnalisation de l'image PHP (Dockerfile) : Ce fichier permet de construire une image Docker sur-mesure basée sur php:8.3-fpm.
-Il met à jour le gestionnaire de paquets (apt-get) pour installer des utilitaires essentiels au développement (curl, unzip, git).
-Ensuite, il télécharge et installe globalement Composer (le gestionnaire de dépendances de PHP), qui est strictement requis pour créer et gérer un projet Symfony.
+---
+
+## Déploiement de l'infrastructure
 
 ### Lancement des conteneurs
 
-J'ai rencontré une erreur lors du lancement, cmme Laragon était resté ouvert en fond , le port mysql était déja utilisé ce qui me crée une erreur lors du lancement.
+_Note de développement :_ J'ai rencontré une erreur lors du premier lancement, car Laragon était resté ouvert en fond. Le port MySQL était déjà utilisé. La fermeture de Laragon a résolu le conflit.
 
-![erreur-lancement](/jour1/job-01-symfony/screenshot/erreur-port.png)
-![lancement après correction , arrêt de laragon](/jour1/job-01-symfony/screenshot/correction-bug-laragon-ouvert-mysql-port-bloque.png)
+![Erreur de port MySQL](screenshot/erreur-port.png)
+![Correction du conflit avec Laragon](screenshot/correction-bug-laragon-ouvert-mysql-port-bloque.png)
+![Création du conteneur via Docker Compose](screenshot/docker-compose-up-d-creation-du-conteneur.png)
+![Conteneur prêt](screenshot/container-ok.png)
+![Lancement réussi](screenshot/lancement-reussi.png)
 
-### Étape 6 : Installer Symfony
+### Installation de Symfony
 
-- symfony new app : Initialise un nouveau projet en téléchargeant l'architecture native du framework directement dans le répertoire app. Ce dossier est automatiquement synchronisé avec le conteneur Docker grâce au volume configuré dans notre docker-compose.yml.
+```bash
+symfony new app --version="7.2.x" --webapp
+```
 
-- --version="7.2.x" : Verrouille l'installation sur la version mineure stable de Symfony 7. Cela assure une parfaite compatibilité avec PHP 8.2+, l'exploitation des fonctionnalités modernes (comme les attributs PHP natifs) et la pérennité du code face aux futures mises à jour.
+`--version="7.2.x"` : verrouille l'installation sur la version mineure stable, assurant la compatibilité avec PHP 8.2+ et les attributs PHP natifs.
 
-- --webapp : Ce flag télécharge la configuration complète pour une application web traditionnelle (Full-Stack). Plutôt que de partir d'un squelette vide (microframework), cette option installe immédiatement les composants indispensables en production : l'ORM (Doctrine), le moteur de rendu (Twig), le gestionnaire de formulaires, le validateur de données, et le framework de sécurité.
+`--webapp` : installe l'architecture full stack (Doctrine, Twig, formulaires, sécurité) indispensable en production.
 
-Aperçu de l'architecture professionnelle générée :L'exécution de cette commande génère une arborescence standardisée, facilitant le travail collaboratif et la maintenance :
+![Installation de Symfony](screenshot/etape-6-installer-symfony.png)
 
-- config/ : Centralise la configuration des routes, des services injectés et des bundles tiers.
-- public/ : L'unique point d'entrée exposé sur le web (lié à notre fichier default.conf de Nginx). Il contient le fichier index.php (Front Controller) qui intercepte toutes les requêtes HTTP.
-- src/ : Le cœur architectural où sera écrit l'ensemble du code métier (Contrôleurs, Entités Doctrine, Services, Repositories).
-- templates/ : Regroupe l'ensemble des fichiers de l'interface utilisateur gérés par le moteur de template Twig.
-- .env : Fichier clé stockant les variables d'environnement spécifiques à l'infrastructure locale (identifiants de base de données, clés secrètes).
+### Configuration & sécurité
 
-commande: symfony new app --version="7.2.x" --webapp
-![lancement de l'installation de symfony](/jour1/job-01-symfony/screenshot/etape-6-installer-symfony.png)
+1. Génération de la clé secrète
 
-Lancement réussi interface docker desktop
-![Lancement réussi interface docker desktop](/jour1/job-01-symfony/screenshot/lancement-reussi.png)
-
-Lancement réussi , aperçu de ma structure et du dossier app/
-![structure](/jour1/job-01-symfony/screenshot/reussi.png)
-
-### Étape 5 page 7 : Configurer la base de données sur le projet
-
-Configuration des mes variables d'environnements dans le .env et création d'une clé secrète sécurisé
-
-![configuration .env et sécurité](/jour1/job-01-symfony/screenshot/configuration-.env-cle-secrete-.png)
-
-#### 1. Génération de la clé secrète de l'application
-
-Pour répondre aux exigences de sécurité en production, nous évitons les clés génériques. Nous générons une clé cryptographique forte de 256 bits via l'utilitaire OpenSSL :
+Pour sécuriser les jetons CSRF et les sessions, une clé cryptographique forte de 256 bits est générée via OpenSSL :
 
 ```bash
 openssl rand -hex 32
+```
 
-Cette méthode professionnelle garantit l'entropie nécessaire à la sécurisation des jetons CSRF, des sessions utilisateur et des signatures de cookies de Symfony.
-2. Connexion à l'infrastructure MySQL
+![Configuration de la clé secrète](screenshot/configuration-.env-cle-secrete-.png)
 
-Nous modifions le fichier app/.env pour lier le framework à notre conteneur de base de données. La configuration de la variable DATABASE_URL se décompose ainsi :
+2. Connexion à MySQL (.env)
 
-    Moteur de stockage : mysql://
+Modification de la variable DATABASE_URL pour lier le framework au conteneur :
 
-    Authentification : symfony:symfony (utilisateur:mot de passe configurés dans le docker-compose)
+```env
+mysql://symfony:symfony@symfony_db:3306/symfony
+```
 
-    Hôte réseau : @symfony_db (nom de service résolu en interne par le bridge réseau de Docker)
+(Authentification symfony:symfony, sur l'hôte interne symfony_db).
 
-    Port standard : :3306
+3. Gestion des permissions
 
-    Nom de la base : /symfony
+Dans le conteneur symfony_app, réalignement des permissions sur l'utilisateur système du serveur web (www-data) pour éviter les erreurs 500 :
 
-3. Gestion de l'environnement conteneurisé
-
-Pour interagir directement avec l'environnement d'exécution PHP, nous ouvrons un terminal interactif TTY dans le conteneur applicatif :
-Bash
-
-docker exec -it symfony_app bash
-
-Note : Cette commande nécessite que l'infrastructure globale ait été préalablement instanciée via docker compose up -d.
-
-Afin d'éviter tout conflit d'accès aux fichiers (Error 500 liée aux droits d'écriture), nous réalignons les permissions de l'espace de travail sur l'utilisateur système du serveur web (www-data) :
-Bash
-
+```bash
 chown -R www-data:www-data /var/www/html
 chmod -R 775 /var/www/html/var
-
-Pour quitter cet environnement isolé et revenir sur la machine hôte, nous utilisons la commande exit.
 ```
+
+![Entrée dans le conteneur](screenshot/entrer-conteneur.png)
+
+### Développement : authentification et interface
+
+Une fois l'infrastructure prête, le développement métier a été réalisé selon les standards Symfony 7 :
+
+1. Base de données (Doctrine)
+
+   Création de l'entité User (make:user).
+
+   Génération et exécution des migrations SQL (make:migration et doctrine:migrations:migrate).
+
+   Injection d'un utilisateur de test chiffré via Doctrine Fixtures (doctrine:fixtures:load).
+
+2. Système de connexion (Security)
+
+   Mise en place de l'authentification par formulaire (make:security:form-login).
+
+   Configuration du pare-feu main dans security.yaml et activation de la protection CSRF.
+
+3. Interface utilisateur (Twig & CSS)
+
+   Création du HomeController avec routage par attribut PHP 8 (#[Route('/')]).
+
+   Développement d'une interface Twig héritant de base.html.twig.
+
+   Externalisation du design dans assets/styles/app.css (utilisation de Flexbox pour le header).
+
+   Gestion conditionnelle de l'affichage : le menu propose le bouton "Connexion" aux visiteurs, et "Déconnexion" aux utilisateurs authentifiés (app.user).
+
+![Connexion réussie](screenshot/connexion-reussi.png)
+![Résultat final](screenshot/reussi.png)
+
+Projet réalisé dans le cadre du Job 01 - Formation La Plateforme.
