@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - La Plateforme{% endblock %}
+
+{% block stylesheets %}
+
+{% endblock %}
+
+{% block body %}
+    <header class="header">
+        <div class="brand">La Plateforme Symfony</div>
+        
+        <nav class="nav-menu">
+            {% if app.user %}
+                <span style="align-self: center;">Connecté : <strong>{{ app.user.userIdentifier }}</strong></span>
+                <a href="{{ path('app_logout') }}" class="nav-btn btn-logout">Déconnexion</a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="nav-btn btn-login">Connexion</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Bienvenue Flavie , sur votre application Symfony </h1>
+        <p>L'infrastructure et le système d'authentification par formulaire sont entièrement opérationnels.</p>
+    </section>
+{% endblock %}
